@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 
-const MONGO_URI = process.env.MONGO_URI;
+const MONGO_URI =
+  'mongodb+srv://debangshimandal:PY337BRNju0ManTh@aistudio.q7oao.mongodb.net/AIStudio';
+
 const connectDB = async (): Promise<void> => {
   try {
     await mongoose.connect(MONGO_URI);

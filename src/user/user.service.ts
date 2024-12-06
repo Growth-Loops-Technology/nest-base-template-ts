@@ -1,47 +1,26 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './user.schema';
+import { CreateUserDto } from './user.dto';
+
 
 @Injectable()
 export class UserService {
-  private readonly sampleUsers = [
-    {
-      name: 'John Doe',
-      email: 'john.doe@example.com',
-      password: 'password123',
-    },
-    {
-      name: 'Jane Smith',
-      email: 'jane.smith@example.com',
-      password: 'abc123',
-    },
-    {
-      name: 'Bob Johnson',
-      email: 'bob.johnson@example.com',
-      password: 'qwerty',
-    },
-  ];
+  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
-  constructor(
-    @InjectModel(User.name)
-    private readonly userModel: Model<User>,
-  ) {
-    this.insertSampleUsers();
+  async findUserByEmail(email: string): Promise<User | null> {
+    return this.userModel.findOne({ email }).exec();
   }
 
-  async createUser(data: Partial<User>): Promise<User> {
-    const user = new this.userModel(data);
-    return user.save();
-  }
-
-  async findAll(): Promise<User[]> {
-    return this.userModel.find().exec();
-  }
-
-  private async insertSampleUsers(): Promise<void> {
-    for (const userData of this.sampleUsers) {
-      await this.createUser(userData);
+  async createUser(createUserDto: CreateUserDto): Promise<User> {
+    // Check if email already exists
+    const existingUser = await this.findUserByEmail(createUserDto.email);
+    if (existingUser) {
+      throw new ConflictException('Email already exists');
     }
+
+    const newUser = new this.userModel(createUserDto);
+    return newUser.save();
   }
 }
