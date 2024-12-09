@@ -1,7 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import * as bcrypt from 'bcrypt';
+import { CreateUserDto, LoginUserDto } from 'src/user/user.dto';
+import { User } from 'src/user/user.schema';
+import { AuthResponse } from 'src/common/types/auth';
 
 @Injectable()
 export class AuthService {
@@ -10,24 +13,41 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<any> {
+  async validateUser(email: string, password: string): Promise<User> {
     const user = await this.userService.findUserByEmail(email);
-    if (user && (await bcrypt.compare(password, user.password))) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password, ...result } = user.toObject();
+    if (!user) throw new UnauthorizedException('Invalid email or password');
+    const { password: originalPassword, ...result } = user.toObject();
+    const isValidMatch = await bcrypt.compare(password, originalPassword);
+    if (isValidMatch) {
       return result;
     }
-    return null;
+    throw new UnauthorizedException('Invalid email or password');
   }
-  
-  async generateToken(payload: { userId: string; email: string }): Promise<string> {
-    return this.jwtService.sign(payload);
-  }  
 
-  async login(user: any) {
-    const payload = { userId: user.userId, email: user.email };
+  generateToken(user: User): string {
+    const payload = { userId: user._id, email: user.email };
+    return this.jwtService.sign(payload);
+  }
+  async handleSignUp(createUserDto: CreateUserDto): Promise<AuthResponse> {
+    const user = await this.userService.createUser(createUserDto);
+
+    const accessToken = this.generateToken(user);
     return {
-      access_token: this.jwtService.sign(payload, { expiresIn: '48h' }),
+      email: user.email,
+      name: user.name,
+      accessToken,
+    };
+  }
+
+  async login(loginUserDto: LoginUserDto): Promise<AuthResponse> {
+    const { email, password } = loginUserDto;
+
+    const user = await this.validateUser(email, password);
+    const accessToken = this.generateToken(user);
+    return {
+      email: user.email,
+      name: user.name,
+      accessToken,
     };
   }
 }

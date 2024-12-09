@@ -1,19 +1,30 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './user.schema';
-import { CreateUserDto } from './user.dto';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Users')
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  // @Post()
-  // async createUser(@Body() data: CreateUserDto): Promise<User> {
-  //   return this.userService.createUser(data);
-  // }
-
-  // @Get()
-  // async getAllUsers(): Promise<User[]> {
-  //   return null;
-  // }
+  @Get('/')
+  @ApiOperation({ summary: 'Get all users' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully retrieved all users',
+    type: [User],
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized access. Please provide valid credentials.',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Internal server error',
+  })
+  @Get()
+  async getAllUsers(): Promise<User[]> {
+    return this.userService.getAllUsers();
+  }
 }

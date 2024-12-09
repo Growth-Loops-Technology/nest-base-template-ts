@@ -4,13 +4,12 @@ import { Model } from 'mongoose';
 import { User } from './user.schema';
 import { CreateUserDto } from './user.dto';
 
-
 @Injectable()
 export class UserService {
   constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
   async findUserByEmail(email: string): Promise<User | null> {
-    return this.userModel.findOne({ email }).exec();
+    return this.userModel.findOne({ email }).select('+password').exec();
   }
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
@@ -22,5 +21,9 @@ export class UserService {
 
     const newUser = new this.userModel(createUserDto);
     return newUser.save();
+  }
+  async getAllUsers(): Promise<User[]> {
+    const users = this.userModel.find();
+    return users;
   }
 }
