@@ -2,20 +2,17 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
-import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
+import { DatabaseModule } from './auth/common/databaseModule.module';
 
 @Module({
-  // imports: [UserModule, MongooseModule.forRoot(process.env.MONGO_URI)],
   imports: [
     UserModule,
     ConfigModule.forRoot({
-      isGlobal: true, // This makes the config globally available
+      isGlobal: true,
     }),
-    MongooseModule.forRoot(
-      'mongodb+srv://debangshimandal:PY337BRNju0ManTh@aistudio.q7oao.mongodb.net/AIStudioDB',
-    ),
+    DatabaseModule,
     AuthModule,
   ],
   controllers: [AppController],

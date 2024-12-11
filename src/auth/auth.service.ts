@@ -1,60 +1,49 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import * as bcrypt from 'bcrypt';
-import { ConfigService } from '@nestjs/config';
+import { CreateUserDto, LoginUserDto } from 'src/user/user.dto';
+import { User } from 'src/user/user.schema';
+import { AuthResponse } from './common/auth';
 
 @Injectable()
 export class AuthService {
-  private readonly SALT_ROUNDS = 10;
   constructor(
-    private userService: UserService,
-    private jwtService: JwtService,
-    private configService: ConfigService,
+    private readonly userService: UserService,
+    private readonly jwtService: JwtService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<any> {
+  // Validate user credentials
+  async validateCredentials(email: string, password: string): Promise<User> {
     const user = await this.userService.findByEmail(email);
-
-    if (user) {
-      try {
-        // Direct comparison using bcrypt
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (isPasswordValid) {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { password: pwd, ...result } = user.toObject();
-          return result;
-        }
-      } catch (error) {
-        console.error('Authentication Error:', {
-          message: error.message,
-          stack: error.stack,
-        });
-      }
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      throw new UnauthorizedException('Invalid email or password');
     }
-    return null;
+    return user;
   }
 
-  // Generate a JWT token with a payload containing user ID and email
-  async createJwtToken(
-    payload: { userId: string; email: string },
-    expiresIn: string = '48h',
-  ): Promise<string> {
-    return this.jwtService.sign(payload, {
-      expiresIn,
-      secret: this.configService.get<string>('JWT_SECRET'),
-    });
+  // Generate JWT token
+  private generateToken(user: User): string {
+    const payload = { userId: user._id, email: user.email };
+    return this.jwtService.sign(payload);
   }
 
-  // Handles login response with an access token
-  async login(user: any) {
-    const payload = { userId: user.userId, email: user.email };
+  // Build Auth Response
+  buildAuthResponse(user: User): AuthResponse {
     return {
-      access_token: await this.createJwtToken(payload),
-      user: {
-        id: payload.userId,
-        email: payload.email,
-      },
+      email: user.email,
+      name: user.name,
+      accessToken: this.generateToken(user),
     };
+  }
+
+  // Handle user registration
+  async registerUser(createUserDto: CreateUserDto): Promise<User> {
+    return this.userService.registerUser(createUserDto);
+  }
+
+  // Handle user authentication
+  async authenticateUser(loginUserDto: LoginUserDto): Promise<User> {
+    return this.validateCredentials(loginUserDto.email, loginUserDto.password);
   }
 }

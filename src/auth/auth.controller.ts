@@ -1,17 +1,12 @@
-import { Body, Controller, Post, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto, LoginUserDto } from 'src/user/user.dto';
-import { UserService } from '../user/user.service';
 import { Public } from './guards/roles.decorator';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CustomException } from 'src/http-error/error-handler';
-import {
-  ApiOk,
-  CommonHttpErrors,
-  ApiAccepted,
-} from 'src/http-error/http-error';
+import { AuthResponse } from './common/auth';
+import { UserService } from 'src/user/user.service';
 
-@ApiTags('Auth') // Groups endpoints under the "Auth" tag in Swagger
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -27,22 +22,9 @@ export class AuthController {
   @Public()
   @Post('signup')
   @ApiOperation({ summary: 'Register a new user' })
-  @ApiAccepted('User registered successfully')
-  @CommonHttpErrors()
-  async signup(@Body() createUserDto: CreateUserDto) {
-    // Create a new user
-    const user = await this.userService.registerUser(createUserDto);
-
-    // Generate JWT token for the new user
-    const payload = { userId: user._id, email: user.email };
-    const accessToken = await this.authService.createJwtToken(payload);
-
-    // Return response with token
-    return {
-      email: user.email,
-      name: user.name,
-      accessToken,
-    };
+  async signup(@Body() createUserDto: CreateUserDto): Promise<AuthResponse> {
+    const user = await this.authService.registerUser(createUserDto);
+    return this.authService.buildAuthResponse(user);
   }
 
   /**
@@ -53,23 +35,8 @@ export class AuthController {
   @Public()
   @Post('login')
   @ApiOperation({ summary: 'Log in an existing user' })
-  @ApiOk({ description: 'User logged in successfully' })
-  @CommonHttpErrors()
-  async login(@Body() loginUserDto: LoginUserDto) {
-    const { email, password } = loginUserDto;
-
-    // Validate user credentials
-    const user = await this.authService.validateUser(email, password);
-    console.log('Login Request:', loginUserDto);
-    console.log('User Validated:', user);
-    if (!user) {
-      throw new CustomException({
-        _message: 'Invalid email or password',
-        _statusCode: HttpStatus.UNAUTHORIZED,
-      });
-    }
-
-    // Generate JWT token for the authenticated user
-    return this.authService.login(user);
+  async login(@Body() loginUserDto: LoginUserDto): Promise<AuthResponse> {
+    const user = await this.authService.authenticateUser(loginUserDto);
+    return this.authService.buildAuthResponse(user);
   }
 }
