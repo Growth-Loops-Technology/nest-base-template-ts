@@ -8,12 +8,16 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/auth.gaurd';
+import { RolesGuard } from 'src/auth/roles/roles.gaurd';
+import { Roles } from 'src/auth/roles/roles.decorator';
+import { UserType } from 'src/common/enum/user.enum';
 
 @ApiTags('Users')
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserType.ADMIN)
   @ApiBearerAuth()
   @Get('/')
   @ApiOperation({ summary: 'Get all users' })

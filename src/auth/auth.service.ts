@@ -24,7 +24,11 @@ export class AuthService {
 
   // Generate JWT token
   private generateToken(user: User): string {
-    const payload = { sub: user._id.toString(), email: user.email };
+    const payload = {
+      sub: user._id.toString(),
+      email: user.email,
+      role: user.userType,
+    };
     console.log(payload);
     return this.jwtService.sign(payload);
   }
