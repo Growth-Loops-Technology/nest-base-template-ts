@@ -23,7 +23,6 @@ export class UserController {
     status: 500,
     description: 'Internal server error',
   })
-  @Get()
   async getAllUsers(): Promise<User[]> {
     return this.userService.getAllUsers();
   }

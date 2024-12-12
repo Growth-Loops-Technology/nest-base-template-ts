@@ -4,50 +4,46 @@ import { UserService } from '../user/user.service';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto, LoginUserDto } from 'src/user/user.dto';
 import { User } from 'src/user/user.schema';
-import { AuthResponse } from 'src/common/types/auth';
+import { AuthResponse } from '../common/auth';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private userService: UserService,
-    private jwtService: JwtService,
+    private readonly userService: UserService,
+    private readonly jwtService: JwtService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<User> {
-    const user = await this.userService.findUserByEmail(email);
-    if (!user) throw new UnauthorizedException('Invalid email or password');
-    const { password: originalPassword, ...result } = user.toObject();
-    const isValidMatch = await bcrypt.compare(password, originalPassword);
-    if (isValidMatch) {
-      return result;
+  // Validate user credentials
+  async validateCredentials(email: string, password: string): Promise<User> {
+    const user = await this.userService.findByEmail(email);
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      throw new UnauthorizedException('Invalid email or password');
     }
-    throw new UnauthorizedException('Invalid email or password');
+    return user;
   }
 
-  generateToken(user: User): string {
+  // Generate JWT token
+  private generateToken(user: User): string {
     const payload = { userId: user._id, email: user.email };
     return this.jwtService.sign(payload);
   }
-  async handleSignUp(createUserDto: CreateUserDto): Promise<AuthResponse> {
-    const user = await this.userService.createUser(createUserDto);
 
-    const accessToken = this.generateToken(user);
+  // Build Auth Response
+  buildAuthResponse(user: User): AuthResponse {
     return {
       email: user.email,
       name: user.name,
-      accessToken,
+      accessToken: this.generateToken(user),
     };
   }
 
-  async login(loginUserDto: LoginUserDto): Promise<AuthResponse> {
-    const { email, password } = loginUserDto;
+  // Handle user registration
+  async registerUser(createUserDto: CreateUserDto): Promise<User> {
+    return this.userService.registerUser(createUserDto);
+  }
 
-    const user = await this.validateUser(email, password);
-    const accessToken = this.generateToken(user);
-    return {
-      email: user.email,
-      name: user.name,
-      accessToken,
-    };
+  // Handle user authentication
+  async authenticateUser(loginUserDto: LoginUserDto): Promise<User> {
+    return this.validateCredentials(loginUserDto.email, loginUserDto.password);
   }
 }
