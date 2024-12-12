@@ -4,7 +4,7 @@ import { UserService } from '../user/user.service';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto, LoginUserDto } from 'src/user/user.dto';
 import { User } from 'src/user/user.schema';
-import { AuthResponse } from '../common/auth';
+import { AuthResponse } from 'src/common/types/auth';
 
 @Injectable()
 export class AuthService {
@@ -24,7 +24,8 @@ export class AuthService {
 
   // Generate JWT token
   private generateToken(user: User): string {
-    const payload = { userId: user._id, email: user.email };
+    const payload = { sub: user._id.toString(), email: user.email };
+    console.log(payload);
     return this.jwtService.sign(payload);
   }
 
