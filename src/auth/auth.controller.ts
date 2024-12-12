@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import { CreateUserDto, LoginUserDto } from 'src/user/user.dto';
 import { Public } from './guards/roles.decorator';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AuthResponse } from './common/auth';
+import { AuthResponse } from 'src/common/auth';
 import { UserService } from 'src/user/user.service';
 
 @ApiTags('Auth')
