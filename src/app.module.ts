@@ -28,8 +28,8 @@ import { ValidationPipe } from '@nestjs/common';
 export class AppModule {
   static setupSwagger(app: any) {
     const config = new DocumentBuilder()
-      .setTitle('NestJS API Title')
-      .setDescription('Your API description')
+      .setTitle('NestJS API(Postgres/Prisma)')
+      .setDescription('Basic APIs')
       .setVersion('1.0')
       .addBearerAuth()
       .build();
