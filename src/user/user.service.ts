@@ -8,6 +8,9 @@ import { CreateUserDto } from './user.dto';
 export class UserService {
   constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
+  async findById(id: string): Promise<User | null> {
+    return this.userModel.findById(id).exec();
+  }
   // This method checks if a user exists based on their email
   async findByEmail(email: string): Promise<User | null> {
     return this.userModel.findOne({ email }).select('+password').exec();
@@ -25,5 +28,9 @@ export class UserService {
       ...createUserDto,
     });
     return newUser.save();
+  }
+  async getAllUsers(): Promise<User[]> {
+    const users = this.userModel.find();
+    return users;
   }
 }
