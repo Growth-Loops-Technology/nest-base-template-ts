@@ -1,4 +1,10 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './user.schema';
@@ -29,6 +35,41 @@ export class UserService {
     });
     return newUser.save();
   }
+
+  async changePassword(
+    userId: string,
+    oldPassword: string,
+    newPassword: string,
+  ) {
+    // find the user
+    const loggedinUser = await this.userModel
+      .findById(userId)
+      .select('+password');
+
+    if (!loggedinUser) {
+      throw new NotFoundException('User not Found...');
+    }
+
+    // compare the old password with the new password in DB
+    const passwordMatch = await bcrypt.compare(
+      oldPassword,
+      loggedinUser.password,
+    );
+    if (!passwordMatch) {
+      throw new UnauthorizedException('Wrong credentials');
+    }
+
+    // change user password
+    // const newHashedPassword = await bcrypt.hash(newPassword, 10);
+    loggedinUser.password = newPassword;
+    await loggedinUser.save();
+
+    return {
+      userId: loggedinUser._id,
+      email: loggedinUser.email,
+    };
+  }
+
   async getAllUsers(): Promise<User[]> {
     const users = this.userModel.find();
     return users;

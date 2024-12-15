@@ -16,6 +16,8 @@ export class AuthService {
   // Validate user credentials
   async validateCredentials(email: string, password: string): Promise<User> {
     const user = await this.userService.findByEmail(email);
+    console.log('user ', user);
+
     if (!user || !(await bcrypt.compare(password, user.password))) {
       throw new UnauthorizedException('Invalid email or password');
     }
@@ -29,8 +31,7 @@ export class AuthService {
       email: user.email,
       role: user.userType,
     };
-    console.log(payload);
-    return this.jwtService.sign(payload);
+    return this.jwtService.sign(payload, { expiresIn: '10h' });
   }
 
   // Build Auth Response
@@ -49,6 +50,7 @@ export class AuthService {
 
   // Handle user authentication
   async authenticateUser(loginUserDto: LoginUserDto): Promise<User> {
+    console.log(loginUserDto.email, loginUserDto.password);
     return this.validateCredentials(loginUserDto.email, loginUserDto.password);
   }
 }
