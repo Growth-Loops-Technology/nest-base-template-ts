@@ -32,11 +32,11 @@ export class QuestionService {
 
     // Create the question
     const question = new this.questionModel({
-      questionId: undefined, // UUID will be auto-generated
+      questionId: undefined,
       qsTitle: qs_title,
       qsType: qs_type,
       options: optionDocuments.length > 0 ? optionDocuments : [],
-      user: userId, // User reference ID
+      user: userId,
     });
 
     return question.save();
@@ -62,11 +62,11 @@ export class QuestionService {
 
   // Update a Question
   async update(
-    id: string,
+    questionId: string,
     updateQuestionDto: CreateQuestionDto,
   ): Promise<Question> {
     return this.questionModel
-      .findByIdAndUpdate(id, updateQuestionDto, { new: true })
+      .findByIdAndUpdate(questionId, updateQuestionDto, { new: true })
       .exec();
   }
 

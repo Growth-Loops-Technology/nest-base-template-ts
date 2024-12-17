@@ -51,12 +51,12 @@ export class QuestionController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserType.ADMIN)
   @ApiBearerAuth()
-  @Put(':id')
+  @Put(':questionId')
   async update(
-    @Param('id') id: string,
+    @Param('questionId') questionId: string,
     @Body() updateQuestionDto: CreateQuestionDto,
   ) {
-    return this.questionService.update(id, updateQuestionDto);
+    return this.questionService.update(questionId, updateQuestionDto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
