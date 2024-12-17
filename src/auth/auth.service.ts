@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import * as bcrypt from 'bcrypt';
@@ -23,7 +27,7 @@ export class AuthService {
   }
 
   // Generate JWT token
-  public generateToken(user: User): string {
+  private generateToken(user: User): string {
     const payload = {
       sub: user._id.toString(),
       email: user.email,
@@ -50,5 +54,24 @@ export class AuthService {
   // Handle user authentication
   async authenticateUser(loginUserDto: LoginUserDto): Promise<User> {
     return this.validateCredentials(loginUserDto.email, loginUserDto.password);
+  }
+
+  async googleLogin(idToken: string): Promise<User> {
+    // Validate the presence of the idToken
+    if (!idToken) {
+      throw new BadRequestException('Token Id is required');
+    }
+
+    try {
+      // Verify the Google ID token using the UserService
+      const userData = await this.userService.verifyGoogleIdToken(idToken);
+
+      // Find or create the user based on the Google data
+      const user = await this.userService.findOrCreateUser(userData);
+      return user;
+    } catch (error) {
+      // Handle any error that occurs during the process
+      throw new BadRequestException('Authentication failed: ' + error.message);
+    }
   }
 }

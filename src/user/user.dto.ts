@@ -30,3 +30,10 @@ export class LoginUserDto {
   @MinLength(6)
   password: string;
 }
+
+export class Google_loginDto {
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  id_token: string;
+}
