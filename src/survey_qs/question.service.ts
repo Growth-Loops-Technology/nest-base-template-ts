@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Option, Question } from './survey_qs.schema';
@@ -60,18 +60,71 @@ export class QuestionService {
       .exec();
   }
 
-  // Update a Question
   async update(
     questionId: string,
     updateQuestionDto: CreateQuestionDto,
   ): Promise<Question> {
+    // First, find the question using the questionId (UUID)
+    const existingQuestion = await this.questionModel
+      .findOne({ questionId: questionId })
+      .populate('options');
+
+    if (!existingQuestion) {
+      throw new NotFoundException(`Question with ID ${questionId} not found`);
+    }
+
+    // Check for options logic
+    if (updateQuestionDto.options && updateQuestionDto.options.length > 0) {
+      // If options exist in the old question, delete them
+      if (existingQuestion.options && existingQuestion.options.length > 0) {
+        await this.optionModel.deleteMany({
+          _id: { $in: existingQuestion.options },
+        });
+      }
+
+      // Create new options and link them
+      const createdOptions = await this.optionModel.insertMany(
+        updateQuestionDto.options.map((option) => ({
+          questionId: existingQuestion.questionId,
+          ...option,
+        })),
+      );
+      updateQuestionDto.options = createdOptions.map((opt) => opt._id);
+    } else {
+      // If no new options are provided but old options exist, delete them
+      if (existingQuestion.options && existingQuestion.options.length > 0) {
+        await this.optionModel.deleteMany({
+          _id: { $in: existingQuestion.options },
+        });
+      }
+      updateQuestionDto.options = [];
+    }
+
+    // Update the question using the existing document's _id
     return this.questionModel
-      .findByIdAndUpdate(questionId, updateQuestionDto, { new: true })
+      .findByIdAndUpdate(existingQuestion._id, updateQuestionDto, {
+        new: true,
+      })
       .exec();
   }
 
   // Delete a Question
   async delete(questionId: string) {
+    // First, find the question to ensure it exists and get its options
+    const question = await this.questionModel.findOne({ questionId });
+
+    if (!question) {
+      throw new NotFoundException(`Question with ID ${questionId} not found`);
+    }
+
+    // Delete all associated options
+    if (question.options && question.options.length > 0) {
+      await this.optionModel.deleteMany({
+        _id: { $in: question.options },
+      });
+    }
+
+    // Then delete the question itself
     return this.questionModel.findOneAndDelete({ questionId }).exec();
   }
 }
