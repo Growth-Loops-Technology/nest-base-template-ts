@@ -30,6 +30,17 @@ export class MailService {
       text: `You requested a password reset. Click the link below to reset your password:\n${resetLink}`,
     };
 
-    await this.transporter.sendMail(mailOptions);
+    try {
+      await this.transporter.sendMail(mailOptions);
+      console.log(`Password reset email sent to ${to}`);
+    } catch (error) {
+      console.error(
+        `Failed to send password reset email to ${to}:`,
+        error.message,
+      );
+      throw new Error(
+        'Error sending password reset email. Please try again later.',
+      );
+    }
   }
 }

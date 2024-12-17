@@ -1,13 +1,13 @@
 import { Body, Controller, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto, LoginUserDto } from 'src/user/user.dto';
-import { ChangePasswordDto } from 'src/user/change-password.dto';
-import { ForgotPasswordDto } from 'src/user/forgot-password.dto';
+import { ChangePasswordDto } from 'src/auth/dto/change-password.dto';
+import { ForgotPasswordDto } from 'src/auth/dto/forgot-password.dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthResponse } from '../common/types/auth';
-import { AuthenticationGuard } from 'src/guards/authentication.guard';
 import { UserService } from 'src/user/user.service';
-import { ResetPasswordDto } from 'src/user/reset-password.dto';
+import { ResetPasswordDto } from 'src/auth/dto/reset-password.dto';
+import { JwtAuthGuard } from './auth.gaurd';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -41,15 +41,17 @@ export class AuthController {
     return this.authService.buildAuthResponse(user);
   }
 
-  @UseGuards(AuthenticationGuard)
+  @UseGuards(JwtAuthGuard)
   @Put('change-password')
   @ApiOperation({ summary: 'Change the password ' })
   async changePassword(
     @Body() changePasswordDto: ChangePasswordDto,
     @Req() req,
   ) {
+    console.log(req.user);
+
     return this.userService.changePassword(
-      req.userId,
+      req.user._id,
       changePasswordDto.oldPassword,
       changePasswordDto.newPassword,
     );
@@ -57,12 +59,12 @@ export class AuthController {
 
   @Post('forgot-password')
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
-    return this.userService.forgotPassword(forgotPasswordDto.email);
+    return this.authService.forgotPassword(forgotPasswordDto.email);
   }
 
   @Put('reset-password')
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
-    return this.userService.resetPassword(
+    return this.authService.resetPassword(
       resetPasswordDto.newPassword,
       resetPasswordDto.resetToken,
     );

@@ -6,9 +6,15 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
+import { ResetToken, ResetTokenSchema } from './schema/reset-token.schema';
+import { MailService } from 'src/services/mail.service';
 
 @Module({
   imports: [
+    MongooseModule.forFeature([
+      { name: ResetToken.name, schema: ResetTokenSchema },
+    ]),
     UserModule,
     PassportModule,
     ConfigModule.forRoot({
@@ -24,7 +30,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, MailService],
   exports: [AuthService],
 })
 export class AuthModule {}
