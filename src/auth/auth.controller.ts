@@ -1,13 +1,21 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto, LoginUserDto } from 'src/user/user.dto';
+import { ChangePasswordDto } from 'src/auth/dto/change-password.dto';
+import { ForgotPasswordDto } from 'src/auth/dto/forgot-password.dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthResponse } from '../common/types/auth';
+import { UserService } from 'src/user/user.service';
+import { ResetPasswordDto } from 'src/auth/dto/reset-password.dto';
+import { JwtAuthGuard } from './auth.gaurd';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private userService: UserService,
+  ) {}
 
   /**
    * Endpoint to handle user signup.
@@ -31,5 +39,34 @@ export class AuthController {
   async login(@Body() loginUserDto: LoginUserDto): Promise<AuthResponse> {
     const user = await this.authService.authenticateUser(loginUserDto);
     return this.authService.buildAuthResponse(user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Put('change-password')
+  @ApiOperation({ summary: 'Change the password ' })
+  async changePassword(
+    @Body() changePasswordDto: ChangePasswordDto,
+    @Req() req,
+  ) {
+    console.log(req.user);
+
+    return this.userService.changePassword(
+      req.user._id,
+      changePasswordDto.oldPassword,
+      changePasswordDto.newPassword,
+    );
+  }
+
+  @Post('forgot-password')
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(forgotPasswordDto.email);
+  }
+
+  @Put('reset-password')
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    return this.authService.resetPassword(
+      resetPasswordDto.newPassword,
+      resetPasswordDto.resetToken,
+    );
   }
 }
