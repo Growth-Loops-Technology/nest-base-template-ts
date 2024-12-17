@@ -21,15 +21,20 @@ export class MailService {
   }
 
   async sendPasswordResetEmail(to: string, token: string) {
-    const resetLink = `http://localhost:3000/reset-password?token=${token}`;
-    const mailOptions = {
-      from: '"AI Studio Manager" <no-reply@growth-loop.io>',
-      to: to,
-      subject: 'Password Reset Request',
-      html: `<p>You requested a password reset. Click the link below to reset your password:</p><p><a href="${resetLink}">Reset Password</a></p>`,
-      text: `You requested a password reset. Click the link below to reset your password:\n${resetLink}`,
-    };
+    try {
+      const resetLink = `http://localhost:3000/reset-password?token=${token}`;
+      const mailOptions = {
+        from: '"AI Studio Manager" <no-reply@growth-loop.io>',
+        to: to,
+        subject: 'Password Reset Request',
+        html: `<p>You requested a password reset. Click the link below to reset your password:</p><p><a href="${resetLink}">Reset Password</a></p>`,
+        text: `You requested a password reset. Click the link below to reset your password:\n${resetLink}`,
+      };
 
-    await this.transporter.sendMail(mailOptions);
+      await this.transporter.sendMail(mailOptions);
+    } catch (error) {
+      console.error('Error sending password reset email:', error);
+      throw error;
+    }
   }
 }
