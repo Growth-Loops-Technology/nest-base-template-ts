@@ -10,7 +10,7 @@ import * as bcrypt from 'bcrypt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './user.schema';
-import { CreateUserDto } from './user.dto';
+import { CreateUserDto } from '../auth/dto/user.dto';
 import { ResetToken } from './reset-token.schema';
 import { MailService } from '../services/mail.service';
 
@@ -96,9 +96,10 @@ export class UserService {
 
       // Send the link to the user by email
 
-      this.mailService.sendPasswordResetEmail(email, resetToken);
+      await this.mailService.sendPasswordResetEmail(email, resetToken);
+      return { message: 'Email sent successfully' };
     }
-    return { message: 'If this user exists, they will receive an email ' };
+    throw new NotFoundException('User not found');
   }
 
   async resetPassword(newPassword: string, resetToken: string) {
