@@ -11,8 +11,8 @@ export class User extends Document {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ required: true, select: false })
-  password: string;
+  @Prop({ select: false })
+  password: string | null;
 
   @Prop({
     type: String,
@@ -21,13 +21,17 @@ export class User extends Document {
   })
   userType: UserType;
 
-  userId: string;
+  @Prop({
+    type: String,
+    default: 'user', // Default value for provider
+  })
+  provider: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
 
 UserSchema.pre('save', async function (next) {
-  if (this.isModified('password')) {
+  if (this.isModified('password') && this.password) {
     this.password = await bcrypt.hash(this.password, 10);
   }
   next();

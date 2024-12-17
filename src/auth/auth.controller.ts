@@ -1,13 +1,21 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateUserDto, LoginUserDto } from 'src/user/user.dto';
+import {
+  CreateUserDto,
+  Google_loginDto,
+  LoginUserDto,
+} from 'src/user/user.dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthResponse } from '../common/types/auth';
-
+import { UserService } from '../user/user.service';
+// import { ApiBody, ApiResponse } from '@nestjs/swagger';
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private readonly userService: UserService,
+  ) {}
 
   /**
    * Endpoint to handle user signup.
@@ -30,6 +38,20 @@ export class AuthController {
   @ApiOperation({ summary: 'Log in an existing user' })
   async login(@Body() loginUserDto: LoginUserDto): Promise<AuthResponse> {
     const user = await this.authService.authenticateUser(loginUserDto);
+    return this.authService.buildAuthResponse(user);
+  }
+
+  /**
+   * Endpoint to handle Google login.
+   * @param idToken - Google ID token for authentication.
+   * @returns User information and a JWT token if authentication is successful.
+   */
+  @Post('google_login')
+  @ApiOperation({ summary: 'Log in with Google' })
+  async googleLogin(
+    @Body() google_loginDto: Google_loginDto,
+  ): Promise<AuthResponse> {
+    const user = await this.authService.googleLogin(google_loginDto.id_token);
     return this.authService.buildAuthResponse(user);
   }
 }
