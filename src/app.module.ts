@@ -5,7 +5,7 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './common/databaseModule.module';
-
+import { ExcelModule } from './report/excel.module';
 @Module({
   imports: [
     UserModule,
@@ -14,6 +14,7 @@ import { DatabaseModule } from './common/databaseModule.module';
     }),
     DatabaseModule,
     AuthModule,
+    ExcelModule,
   ],
   controllers: [AppController],
   providers: [AppService],
