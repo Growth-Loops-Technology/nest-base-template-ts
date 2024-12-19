@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { ExcelType } from 'src/enums/excel_type.enum';
+import { ExcelType } from 'src/common/excel_type.enum';
 
 @Schema()
 export class Transaction extends Document {

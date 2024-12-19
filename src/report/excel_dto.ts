@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
-import { ExcelType } from 'src/enums/excel_type.enum';
+import { ExcelType } from 'src/common/excel_type.enum';
 
 export class UploadExcelDto {
   @ApiProperty({ type: 'string', format: 'binary' })

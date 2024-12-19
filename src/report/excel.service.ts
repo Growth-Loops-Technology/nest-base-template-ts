@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as XLSX from 'xlsx';
 import { Transaction } from './report.schema';
-import { ExcelType } from 'src/enums/excel_type.enum';
+import { ExcelType } from 'src/common/excel_type.enum';
 import * as moment from 'moment';
 
 @Injectable()
